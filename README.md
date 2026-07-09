@@ -2,28 +2,33 @@
 
 # Maximum Independent Set Solver
 
-This repository provides implementations of algorithms to find an **Independent Set** in a graph.  
+This repository provides implementations of algorithms to find an **Independent Set** in a graph.
 An **Independent Set** is a set of vertices in a graph, no two of which are adjacent. The problem of finding the **Maximum Independent Set (MIS)** is NP-hard, so this project implements both **exact** and **approximate** methods.
 
-## 📂 Project Structure
+## Project Structure
 
 ```
-src/
-│── exaustive_search_is.py   # Branch-and-Bound exhaustive search algorithm
-│── greedy_is.py             # Greedy heuristic algorithm
-│── utils.py                 # Utility functions (graph I/O, helpers)
+src/mis/
+├── __init__.py
+├── exhaustive_search_is.py       # Branch-and-Bound exhaustive search algorithm
+├── exhaustive_search_is_fast.py  # Faster exact solver (bitmask, tighter bound, better branching)
+├── greedy_is.py                  # Greedy heuristic algorithm
+├── greedy_is_fast.py             # Faster greedy heuristic (degree-bucket queue)
+└── utils.py                      # Utility functions (graph I/O, helpers)
 ```
 
-## 🚀 Features
+## Features
 
 - **Exact approach (Branch-and-Bound):**
-  - Implemented in `exaustive_search_is.py`.
+  - Implemented in `exhaustive_search_is.py`.
   - Tries all possibilities with pruning to find the maximum independent set.
+  - `exhaustive_search_is_fast.py` computes the exact same optimum, sped up by a bitmask subproblem representation, a matching-based upper bound, max-degree branching, and forced-move reduction rules.
 
 - **Greedy heuristic:**
   - Implemented in `greedy_is.py`.
-  - Iteratively selects the node with the smallest degree and removes its neighbors.
+  - Iteratively selects the node with the smallest degree and removes its closed neighborhood.
   - Fast, but not guaranteed to be optimal.
+  - `greedy_is_fast.py` follows the same strategy with a degree-bucket queue, for O(n + m) running time instead of O(n²).
 
 - **Utility functions (`utils.py`):**
   - Graph generation from file or randomly.
@@ -31,9 +36,18 @@ src/
   - Write results to file.
   - Helper to get the node with minimum degree.
 
-## 📖 Usage
+## Installation
+
+```bash
+pip install -e .
+```
+
+This installs the `mis` package and four console commands: `mis-exact`, `mis-exact-fast`, `mis-greedy`, `mis-greedy-fast`.
+
+## Usage
 
 ### 1. Prepare Input Graph
+
 Graphs are read from an input file in the following format:
 
 ```
@@ -45,27 +59,37 @@ um vm
 ```
 
 Where:
-- `n` = number of nodes  
-- `m` = number of edges  
+- `n` = number of nodes
+- `m` = number of edges
 - Each of the next `m` lines represents an undirected edge `(u, v)`.
 
-You can also generate a random graph with `random_graph_generator(n, p)` from `utils.py`.  
-This will create a file called `input.txt`.
+You can also generate a random graph with `random_graph_generator(n, p, fname="input.txt", seed=None)` from `mis.utils`, which writes the graph to `fname` and also returns it.
 
 ### 2. Run the Algorithms
 
 **Exhaustive Search (Branch-and-Bound):**
 ```bash
-python3 src/exaustive_search_is.py input.txt
+mis-exact input.txt
+mis-exact-fast input.txt   # faster, same optimum
 ```
 
 **Greedy Heuristic:**
 ```bash
-python3 src/greedy_is.py input.txt
+mis-greedy input.txt
+mis-greedy-fast input.txt  # faster, same strategy
 ```
 
+Each command accepts an optional `--output` flag (default: `output.txt`):
+
+```bash
+mis-greedy input.txt --output result.txt
+```
+
+Without installing the package, the same commands are available as `python3 -m mis.<module> input.txt`, e.g. `python3 -m mis.greedy_is input.txt` (run from the `src/` directory, or with `src/` on `PYTHONPATH`).
+
 ### 3. Output
-Both algorithms write their results to `output.txt` in the format:
+
+All four commands write their results to `output.txt` (or the file passed to `--output`) in the format:
 
 ```
 k
@@ -77,17 +101,25 @@ vk
 
 Where `k` is the size of the independent set, followed by the list of nodes.
 
-## 🛠 Dependencies
-- Python 3.7+
+## Dependencies
+
+- Python 3.8+
 - [NetworkX](https://networkx.org/) for graph operations.
 
 Install dependencies with:
 
 ```bash
-pip install networkx
+pip install -r requirements.txt
 ```
 
-## 📊 Example
+## Running the Tests
+
+```bash
+pip install -r requirements-dev.txt
+pytest
+```
+
+## Example
 
 **Input (`input.txt`):**
 ```
@@ -99,7 +131,7 @@ pip install networkx
 
 **Run greedy:**
 ```bash
-python3 src/greedy_is.py input.txt
+mis-greedy input.txt
 ```
 
 **Output (`output.txt`):**
@@ -109,6 +141,7 @@ python3 src/greedy_is.py input.txt
 2
 ```
 
-## 📌 Notes
-- The exhaustive algorithm guarantees the maximum independent set but is exponential in complexity — only feasible for small graphs.
-- The greedy algorithm runs fast and works on larger graphs, but the result is not always optimal.
+## Notes
+
+- The exhaustive algorithms guarantee the maximum independent set but are exponential in complexity — only feasible for small to medium graphs. `exhaustive_search_is_fast.py` pushes that feasible size further, but the exponential worst case remains.
+- The greedy algorithms run fast and work on much larger graphs, but the result is not always optimal.

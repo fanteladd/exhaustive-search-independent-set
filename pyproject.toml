@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "exhaustive-search-independent-set"
+version = "0.1.0"
+description = "Exact and greedy solvers for the Maximum Independent Set problem"
+requires-python = ">=3.8"
+dependencies = [
+    "networkx>=3.0",
+]
+
+[project.scripts]
+mis-exact = "mis.exhaustive_search_is:main"
+mis-exact-fast = "mis.exhaustive_search_is_fast:main"
+mis-greedy = "mis.greedy_is:main"
+mis-greedy-fast = "mis.greedy_is_fast:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+line-length = 110
+target-version = "py38"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP"]
